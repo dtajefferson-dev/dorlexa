@@ -28,7 +28,7 @@ export default async function handler(req, res) {
       twiml.dial(process.env.YOUR_REAL_PHONE_NUMBER);
     } else {
       twiml.say({ voice: 'Google.en-US-Standard-C' }, 
-        'This call requires a one-time forty-nine cent payment to connect. ' +
+        'This call requires a one-time ninety-nine cent payment to connect. ' +
         'Please hang up, open your phone browser, go to dorlexa dot vercel dot app slash pay, ' +
         'enter your number, pay the fee, then call back. ' +
         'Thanks for using Papercall!'
