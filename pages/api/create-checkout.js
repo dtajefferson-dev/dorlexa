@@ -24,7 +24,7 @@ export default async function handler(req, res) {
             product_data: {
               name: 'Papercall One-Time Access'
             },
-            unit_amount: 49
+            unit_amount: 50  // Fixed: 50 cents ($0.50) to meet Stripe minimum
           },
           quantity: 1
         }
@@ -37,7 +37,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({ id: session.id })
   } catch (error) {
-    console.error(error)
+    console.error('Stripe session creation error:', error)
     res.status(500).json({ error: 'Failed to create session' })
   }
 }
