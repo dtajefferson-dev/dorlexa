@@ -1,39 +1,48 @@
-import Twilio from 'twilio'
-import Stripe from 'stripe'
+import Twilio from 'twilio';
+import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
-const VoiceResponse = Twilio.twiml.VoiceResponse
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const VoiceResponse = Twilio.twiml.VoiceResponse;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    res.setHeader('Allow', )
-    return res.status(405).end('Method Not Allowed')
+    res.setHeader('Allow', ['POST']);
+    return res.status(405).end('Method Not Allowed');
   }
 
-  const { From: caller } = req.body
-  const twiml = new VoiceResponse()
+  const { From: caller } = req.body;
+  const twiml = new VoiceResponse();
 
   try {
     const payments = await stripe.paymentIntents.list({
       limit: 100,
       created: { gte: Math.floor(Date.now() / 1000) - 86400 }
-    })
+    });
 
     const hasPaid = payments.data.some(
-      pi => pi.metadata?.caller === caller && pi.status === 'succeeded'
-    )
+      pi => pi.metadata && pi.metadata.caller === caller && pi.status === 'succeeded'
+    );
 
     if (hasPaid) {
-      twiml.say({ voice: 'Google.en-US-Standard-C' }, 'Payment verified. Connecting now.')
-      twiml.dial(process.env.YOUR_REAL_PHONE_NUMBER)
+      twiml.say({ voice: 'Google.en-US-Standard-C' }, 'Payment verified. Connecting now.');
+      twiml.dial(process.env.YOUR_REAL_PHONE_NUMBER);
     } else {
       twiml.say({ voice: 'Google.en-US-Standard-C' }, 
         'This call requires a one-time forty-nine cent payment to connect. ' +
-        'Please hang up, open your phone browser, go to dorlexa dot vercel dot app, ' +
-        'click Pay, enter your number, pay the fee, then call back. ' +
+        'Please hang up, open your phone browser, go to dorlexa dot vercel dot app slash pay, ' +
+        'enter your number, pay the fee, then call back. ' +
         'Thanks for using Papercall!'
-      )
-      twiml.pause({ length: 2 })
-      twiml.say('Goodbye.')
-      twiml.hangup()
+      );
+      twiml.pause({ length: 2 });
+      twiml.say('Goodbye.');
+      twiml.hangup();
     }
+  } catch (err) {
+    console.error(err);
+    twiml.say('An error occurred. Goodbye.');
+    twiml.hangup();
+  }
+
+  res.setHeader('Content-Type', 'text/xml');
+  res.send(twiml.toString());
+}
