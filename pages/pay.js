@@ -1,7 +1,8 @@
+// FORCED DEBUG COMMIT 2 - TO ENSURE UPDATE - FEB 16 2026
+// FORCED DEBUG COMMIT 2 - TO ENSURE UPDATE - FEB 16 2026
+
 import { useEffect, useState } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
-
-// FORCED DEBUG UPDATE - FEB 16 2026 - TO BREAK CACHE AND SHOW ISSUES
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '')
 
