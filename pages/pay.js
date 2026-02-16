@@ -1,40 +1,42 @@
-import { loadStripe } from "@stripe/stripe-js";
-import { useEffect } from "react";
+import { useEffect } from 'react'
+import { loadStripe } from '@stripe/stripe-js'
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
 
-export default function PayPage({ caller }) {
+export default function Pay({ caller }) {
   useEffect(() => {
-    if (!caller) return;
+    if (!caller) return
 
-    fetch('/api/create-checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ caller }),
-    })
-      .then(res => res.json())
-      .then(({ id }) => {
-        stripePromise.then(stripe => {
-          if (stripe) stripe.redirectToCheckout({ sessionId: id });
-        });
-      })
-      .catch(err => console.error('Checkout error:', err));
-  }, [caller]);
+    async function startCheckout() {
+      try {
+        const res = await fetch('/api/create-checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ caller })
+        })
+        const { id } = await res.json()
+        const stripe = await stripePromise
+        if (stripe) await stripe.redirectToCheckout({ sessionId: id })
+      } catch (err) {
+        console.error(err)
+      }
+    }
+
+    startCheckout()
+  }, [caller])
 
   return (
-    <div style={{ padding: "2rem", fontFamily: "sans-serif", maxWidth: "400px", margin: "auto", textAlign: "center" }}>
-      <h1>🔑 Complete Your Call</h1>
-      <p>Pay $0.49 once to connect (valid 24 hours).</p>
-      <p>From: {caller || 'Unknown'}</p>
-      <div style={{ marginTop: "2rem" }}>Redirecting to Stripe payment...</div>
+    <div style={{ padding: '2rem', maxWidth: '400px', margin: 'auto', textAlign: 'center' }}>
+      <h1>Pay to Connect</h1>
+      <p>One-time $0.49 payment (valid 24 hours)</p>
+      <p>From: {caller || 'unknown'}</p>
+      <p>Redirecting to payment...</p>
     </div>
-  );
+  )
 }
 
 export async function getServerSideProps({ query }) {
   return {
-    props: {
-      caller: query.caller || null,
-    },
-  };
+    props: { caller: query.caller || null }
+  }
 }
