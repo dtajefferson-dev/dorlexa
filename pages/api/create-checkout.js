@@ -24,7 +24,7 @@ export default async function handler(req, res) {
             product_data: {
               name: 'Papercall One-Time Access'
             },
-            unit_amount: 50  // Fixed: 50 cents ($0.50) to meet Stripe minimum
+            unit_amount: 99  // ← $0.99 (99 cents)
           },
           quantity: 1
         }
