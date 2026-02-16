@@ -6,7 +6,7 @@ const VoiceResponse = Twilio.twiml.VoiceResponse
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    res.setHeader('Allow', ['POST'])
+    res.setHeader('Allow', )
     return res.status(405).end('Method Not Allowed')
   }
 
@@ -27,10 +27,15 @@ export default async function handler(req, res) {
       twiml.say({ voice: 'Google.en-US-Standard-C' }, 'Payment verified. Connecting now.')
       twiml.dial(process.env.YOUR_REAL_PHONE_NUMBER)
     } else {
-      twiml.say({ voice: 'Google.en-US-Standard-C' }, 'This call requires a $0.49 payment. Redirecting...')
-      twiml.pause({ length: 1 })
-      const url = `https://${req.headers.host}/pay?caller=${encodeURIComponent(caller)}`
-      twiml.redirect(url)
+      twiml.say({ voice: 'Google.en-US-Standard-C' }, 
+        'This number requires a one-time fifty cent payment to connect. ' +
+        'Please hang up, go to dorlexa dot vercel dot app slash pay in your browser, ' +
+        'enter your number, pay the fifty cents, then call back. ' +
+        'Thank you!'
+      )
+      twiml.pause({ length: 2 })
+      twiml.say('Goodbye.')
+      twiml.hangup()
     }
   } catch (err) {
     console.error(err)
