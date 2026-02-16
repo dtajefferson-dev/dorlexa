@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     })
 
     const hasPaid = payments.data.some(
-      pi => pi.metadata && pi.metadata.caller === caller && pi.status === 'succeeded'
+      pi => pi.metadata?.caller === caller && pi.status === 'succeeded'
     )
 
     if (hasPaid) {
@@ -28,21 +28,12 @@ export default async function handler(req, res) {
       twiml.dial(process.env.YOUR_REAL_PHONE_NUMBER)
     } else {
       twiml.say({ voice: 'Google.en-US-Standard-C' }, 
-        'This number requires a one-time fifty cent payment to connect. ' +
-        'Please hang up, go to dorlexa dot vercel dot app slash pay in your browser, ' +
-        'enter your number, pay the fifty cents, then call back. ' +
-        'Thank you!'
+        'This call requires a one-time forty-nine cent payment to connect. ' +
+        'Please hang up, open your phone browser, go to dorlexa dot vercel dot app, ' +
+        'click Pay, enter your number, pay the fee, then call back. ' +
+        'Thanks for using Papercall!'
       )
       twiml.pause({ length: 2 })
       twiml.say('Goodbye.')
       twiml.hangup()
     }
-  } catch (err) {
-    console.error(err)
-    twiml.say('An error occurred. Goodbye.')
-    twiml.hangup()
-  }
-
-  res.setHeader('Content-Type', 'text/xml')
-  res.send(twiml.toString())
-}
