@@ -16,14 +16,15 @@ export default async function handler(req, res) {
     caller = '+' + caller;
   }
 
+  console.log('[INCOMING] Caller number:', caller);
+
   const twiml = new VoiceResponse();
 
   try {
-    // List recent Checkout Sessions instead of Payment Intents
     const sessions = await stripe.checkout.sessions.list({
       limit: 100,
       created: { gte: Math.floor(Date.now() / 1000) - 86400 },
-      status: 'complete' // only completed ones
+      status: 'complete'
     });
 
     const hasPaid = sessions.data.some(session => {
@@ -34,9 +35,21 @@ export default async function handler(req, res) {
       return storedCaller === caller;
     });
 
+    console.log('[INCOMING] Has paid recently:', hasPaid);
+
     if (hasPaid) {
       twiml.say({ voice: 'Google.en-US-Standard-C' }, 'Payment verified. Connecting now.');
-      twiml.dial(process.env.YOUR_REAL_PHONE_NUMBER);
+      
+      const realNumber = process.env.YOUR_REAL_PHONE_NUMBER;
+      console.log('[INCOMING] Dialing real number:', realNumber);
+
+      if (!realNumber || !realNumber.startsWith('+')) {
+        console.error('[INCOMING] Invalid real number format - must be +1...');
+        twiml.say('Sorry, service configuration error. Goodbye.');
+        twiml.hangup();
+      } else {
+        twiml.dial(realNumber);
+      }
     } else {
       twiml.say({ voice: 'Google.en-US-Standard-C' }, 
         'This call requires a one-time ninety-nine cent payment to connect. ' +
@@ -49,7 +62,7 @@ export default async function handler(req, res) {
       twiml.hangup();
     }
   } catch (err) {
-    console.error('Payment check error:', err);
+    console.error('[INCOMING] Error:', err.message);
     twiml.say('An error occurred. Goodbye.');
     twiml.hangup();
   }
