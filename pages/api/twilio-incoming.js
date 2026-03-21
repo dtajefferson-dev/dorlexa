@@ -10,18 +10,29 @@ export default async function handler(req, res) {
     return res.status(405).end('Method Not Allowed');
   }
 
-  const { From: caller } = req.body;
+  let caller = req.body.From || '';
+  caller = caller.trim();
+  if (!caller.startsWith('+')) {
+    caller = '+' + caller;
+  }
+
   const twiml = new VoiceResponse();
 
   try {
-    const payments = await stripe.paymentIntents.list({
+    // List recent Checkout Sessions instead of Payment Intents
+    const sessions = await stripe.checkout.sessions.list({
       limit: 100,
-      created: { gte: Math.floor(Date.now() / 1000) - 86400 }
+      created: { gte: Math.floor(Date.now() / 1000) - 86400 },
+      status: 'complete' // only completed ones
     });
 
-    const hasPaid = payments.data.some(
-      pi => pi.metadata && pi.metadata.caller === caller && pi.status === 'succeeded'
-    );
+    const hasPaid = sessions.data.some(session => {
+      let storedCaller = session.metadata?.caller?.trim();
+      if (storedCaller && !storedCaller.startsWith('+')) {
+        storedCaller = '+' + storedCaller;
+      }
+      return storedCaller === caller;
+    });
 
     if (hasPaid) {
       twiml.say({ voice: 'Google.en-US-Standard-C' }, 'Payment verified. Connecting now.');
@@ -38,7 +49,7 @@ export default async function handler(req, res) {
       twiml.hangup();
     }
   } catch (err) {
-    console.error(err);
+    console.error('Payment check error:', err);
     twiml.say('An error occurred. Goodbye.');
     twiml.hangup();
   }
